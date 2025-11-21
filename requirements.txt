@@ -1,0 +1,21 @@
+# Core Dependencies
+gymnasium>=0.29.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+
+# Reinforcement Learning
+stable-baselines3>=2.0.0
+torch>=2.0.0
+
+# Visualization
+pygame>=2.5.0
+
+# Utilities
+tensorboard>=2.13.0
+pandas>=2.0.0
+scipy>=1.10.0
+
+# Optional but recommended
+pillow>=10.0.0
+opencv-python>=4.8.0
+

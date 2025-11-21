@@ -1,0 +1,227 @@
+﻿AFRICAN LEADERSHIP UNIVERSITY
+[BSE] 
+[ML TECHNIQUES II] 
+[SUMMATIVE ASSIGNMENT]
+
+
+Reinforcement Learning Summative Assignment Report
+Student Name: Afsa Umutoniwase
+Video Recording: [INSERT YOUR VIDEO LINK HERE - YouTube/Google Drive]
+GitHub Repository: https://github.com/Afsaumutoniwase/Afsa_Umutoniwase_rl_summative
+
+1. Project Overview
+FarmSmart Rwanda is an AI-powered hydroponics management system designed to revolutionize agriculture in Rwanda by optimizing resource-constrained farming. This project implements reinforcement learning agents to autonomously manage critical hydroponic parameters including nutrient concentration (EC), pH levels, water levels, and light intensity to maximize crop yield. Four RL algorithms (DQN, PPO, A2C, and REINFORCE) were trained and compared in a custom Gymnasium environment simulating an 8x8 hydroponic grid with 64 plant slots. The agents learn to balance maintaining optimal growing conditions with timely harvesting of mature plants, addressing real-world challenges faced by Rwandan farmers including limited arable land, climate variability, and technical knowledge gaps in modern farming techniques.
+2. Environment Description
+   1.  Agent(s)
+The agent represents an autonomous farm manager responsible for operating a hydroponic farming system. It continuously monitors environmental conditions and plant growth stages, making decisions to optimize crop production. The agent can adjust nutrient levels, pH, water supply, and lighting conditions while determining the optimal timing for harvesting mature plants. It exhibits exploratory behavior during training to discover effective farming strategies and exploits learned policies during evaluation to maximize yield.
+
+   2. Action Space
+The environment implements a discrete action space with 9 possible actions:
+   • Action 0: Increase nutrients (EC) by 0.2 units
+   • Action 1: Decrease nutrients (EC) by 0.2 units
+   • Action 2: Increase pH by 0.1 units
+   • Action 3: Decrease pH by 0.1 units
+   • Action 4: Add water (increase water level by 5%)
+   • Action 5: Increase light intensity by 10%
+   • Action 6: Decrease light intensity by 10%
+   • Action 7: Harvest all mature plants (growth ≥ 0.90)
+   • Action 8: Do nothing (wait and observe)
+
+   3. Observation Space
+The observation is a 9-dimensional continuous vector encoded as float32 values:
+   • EC (Electrical Conductivity): [0.0, 4.0] - nutrient concentration
+   • pH Level: [4.0, 8.0] - acidity/alkalinity
+   • Water Level: [0.0, 100.0] - percentage of tank capacity
+   • Light Intensity: [0.0, 100.0] - percentage of maximum lumens
+   • Average Growth Stage: [0.0, 1.0] - mean plant maturity across grid
+   • Mature Plants Ratio: [0.0, 1.0] - proportion of harvestable plants
+   • Temperature: [15.0, 35.0] - degrees Celsius
+   • Humidity: [30.0, 90.0] - percentage
+   • Time of Day: [0.0, 1.0] - normalized daily cycle
+
+   4.  Reward Structure
+The reward function incentivizes optimal farming practices through a multi-objective approach:
+
+Positive Rewards:
+   • Optimal EC (1.5-2.5): +0.5 per step
+   • Optimal pH (5.5-6.5): +0.5 per step
+   • Optimal water level (70-85%): +0.3 per step
+   • Optimal light (60-80%): +0.2 per step
+   • Plant growth progress: +0.1 × avg_growth per step
+   • Harvesting plants: +50 per plant harvested
+   • Bulk harvest bonus (≥10 plants): +100
+   • All conditions optimal: +1.0 per step
+
+Negative Rewards:
+   • Severe EC imbalance (EC<0.5 or EC>3.5): -1.0 per step
+   • Extreme pH (pH<4.5 or pH>7.5): -1.0 per step
+   • Low water (<30%): -0.8 per step
+   • Excess water (>95%): -0.5 per step
+   • Unharvested mature plants (≥5): -1.0 per plant per step
+   • Many unharvested (≥30): -50 additional penalty
+   • Step penalty (efficiency): -0.05 per step
+
+This structure strongly encourages harvesting behavior (up to 3,300 reward for harvesting all 64 plants) while penalizing resource waste and suboptimal conditions.
+
+   5. Environment Visualization
+The Pygame visualization displays a grid-based representation of the hydroponic system with color-coded plant growth stages (dark green = young, bright green = mature). Real-time metrics show EC, pH, water level, light intensity, temperature, and humidity with visual indicators for optimal ranges. A harvest counter tracks total plants harvested, and the current action and reward are displayed. The visualization updates at 4 FPS, providing clear feedback on agent decisions and environmental state transitions.
+
+[INSERT IMAGE: Screenshot from static_random_agent/ folder showing the environment visualization]
+[Caption: Figure 1. Pygame visualization of the hydroponic environment showing plant grid, environmental parameters, and metrics dashboard]
+
+3. System Analysis And Design
+   1. Deep Q-Network (DQN)
+Our DQN implementation utilizes the Stable-Baselines3 framework with a Multi-Layer Perceptron (MLP) policy network. The architecture consists of two hidden layers with 256 neurons each, using ReLU activations. Key features include:
+   • Experience Replay Buffer: 100,000 transitions stored for decorrelated mini-batch learning
+   • Target Network: Separate Q-target network updated every 1,000 steps for stable learning
+   • Epsilon-Greedy Exploration: Starts at 1.0, decays linearly to 0.05 over 10% of training
+   • Huber Loss: Reduces sensitivity to outliers in Q-value estimation
+   • Gradient Clipping: Prevents exploding gradients during backpropagation
+The network takes the 9-dimensional observation as input and outputs Q-values for all 9 actions. Training uses Adam optimizer with learning rate 0.0001 and discount factor gamma=0.99.
+
+   2. Policy Gradient Methods
+PPO (Proximal Policy Optimization): Implements an actor-critic architecture with shared feature extraction layers (256x256 MLP) and separate policy and value heads. Uses clipped surrogate objective (clip_range=0.2) to prevent large policy updates. Trained with 2,048 steps per rollout, 64-sample mini-batches, and 10 epochs per update. Includes entropy bonus (0.01) for exploration and GAE (lambda=0.95) for advantage estimation.
+
+A2C (Advantage Actor-Critic): Uses synchronous updates with 5-step returns for bias-variance tradeoff. Shares network architecture with PPO (256x256) but updates after every n-step batch. Learning rate 0.0007, GAE lambda=1.0 for full Monte Carlo returns. Value function coefficient 0.5 balances policy and value losses.
+
+REINFORCE: Implemented as PPO variant with minimal variance reduction. Uses complete episode rollouts (200 steps), batch size equal to rollout length, single epoch updates (n_epochs=1), and clip_range=1.0 (no clipping). GAE lambda=1.0 for pure policy gradient. Learning rate 0.0005 for stable convergence.
+4. Implementation
+   1. DQN
+
+Config	Learning Rate	Gamma	Replay Buffer Size	Batch Size	Exploration Fraction	Target Update Interval	Mean Reward
+1	0.0001	0.99	100,000	32	0.1	1000	291.60
+2	0.0005	0.99	100,000	32	0.1	1000	164.22
+3	0.00005	0.99	100,000	32	0.1	1000	255.30
+4	0.0001	0.99	200,000	32	0.1	1000	182.74
+5	0.0001	0.99	100,000	64	0.1	1000	258.61
+6	0.0001	0.99	100,000	32	0.2	1000	251.95
+7	0.0001	0.99	100,000	32	0.1	500	298.13
+8	0.0001	0.995	100,000	32	0.1	1000	323.78 (BEST)
+9	0.0001	0.98	100,000	32	0.1	1000	257.43
+10	0.0001	0.99	100,000	128	0.1	1000	283.77
+11	0.0001	0.99	50,000	32	0.1	1000	256.42
+12	0.00015	0.99	100,000	32	0.1	1000	275.08
+
+   2. REINFORCE
+
+Config	Learning Rate	N Steps	Batch Size	Gamma	GAE Lambda	Clip Range	Mean Reward
+1	0.001	200	200	0.99	1.0	1.0	39.81
+2	0.005	200	200	0.99	1.0	1.0	-86.31
+3	0.0005	200	200	0.99	1.0	1.0	214.98 (BEST)
+4	0.001	100	100	0.99	1.0	1.0	77.32
+5	0.001	200	200	0.995	1.0	1.0	98.66
+6	0.0005	200	200	0.98	1.0	1.0	167.54
+7	0.0005	200	200	0.99	0.95	1.0	185.39
+8	0.001	300	300	0.99	1.0	1.0	-17.85
+9	0.0003	200	200	0.99	1.0	1.0	124.87
+10	0.0005	150	150	0.99	1.0	1.0	152.61
+11	0.0007	200	200	0.99	1.0	1.0	78.94
+12	0.0005	200	200	0.99	1.0	0.5	166.29
+
+   3. A2C
+
+Config	Learning Rate	N Steps	Gamma	GAE Lambda	Ent Coef	VF Coef	Mean Reward
+1	0.0007	5	0.99	1.0	0.01	0.5	-40.71
+2	0.001	5	0.99	1.0	0.01	0.5	-136.63
+3	0.0005	5	0.99	1.0	0.01	0.5	-0.46 (BEST)
+4	0.0007	10	0.99	1.0	0.01	0.5	-10.45
+5	0.0007	5	0.995	1.0	0.01	0.5	-39.57
+6	0.0007	5	0.99	0.95	0.01	0.5	-65.74
+7	0.0007	5	0.99	1.0	0.001	0.5	-88.69
+8	0.0007	5	0.99	1.0	0.05	0.5	-119.90
+9	0.0005	8	0.99	1.0	0.01	0.5	-56.38
+10	0.0003	5	0.99	1.0	0.01	0.5	-71.52
+11	0.0007	5	0.99	1.0	0.01	0.25	-82.21
+12	0.0007	5	0.99	1.0	0.01	0.75	-93.45
+
+   4. PPO
+
+Config	Learning Rate	N Steps	Batch Size	N Epochs	Clip Range	GAE Lambda	Mean Reward
+1	0.0003	2048	64	10	0.2	0.95	233.18
+2	0.001	2048	64	10	0.2	0.95	183.85
+3	0.0001	2048	64	10	0.2	0.95	205.85
+4	0.0003	2048	64	20	0.2	0.95	249.83 (BEST)
+5	0.0003	2048	128	10	0.2	0.95	213.55
+6	0.0003	1024	64	10	0.2	0.95	218.91
+7	0.0003	2048	64	10	0.3	0.95	194.76
+8	0.0003	2048	64	10	0.2	0.9	221.43
+9	0.0005	2048	64	10	0.2	0.95	198.32
+10	0.0003	2048	64	15	0.2	0.95	237.54
+11	0.0003	2048	32	10	0.2	0.95	196.87
+12	0.0002	2048	64	10	0.2	0.95	228.61
+
+[INSERT IMAGE: hyperparameter_comparison.png]
+[Caption: Figure 2. Hyperparameter tuning results showing mean reward across 12 configurations for each algorithm. Best configurations highlighted in green with red border.]
+
+5. Results Discussion
+
+Key Performance Metrics (Final Trained Models - 200,000 timesteps):
+   • DQN: Mean Reward = 2,948.55 ± 1,544.62 (High variance, inconsistent performance)
+   • PPO: Mean Reward = 2,944.81 ± 619.75 (Stable but lower peak)
+   • A2C: Mean Reward = 3,651.89 ± 381.03 (Good balance of performance and stability)
+   • REINFORCE: Mean Reward = 3,851.95 ± 285.04 (Best overall, most stable)
+
+[INSERT IMAGE: performance_summary_table.png]
+[Caption: Table 1. Summary of final model performance metrics across all algorithms]
+
+[INSERT IMAGE: final_model_comparison.png]
+[Caption: Figure 3. Final model performance comparison showing mean rewards with standard deviation (left) and stability scores (right)]
+
+1. Cumulative Rewards and Training Stability
+
+DQN exhibited the highest variance in performance (±1,544.62), indicating instability in learning optimal harvesting strategies. The Q-learning approach struggled with the sparse reward structure where harvesting only occurs periodically. Loss curves showed high fluctuations throughout training, suggesting difficulty in converging to stable Q-value estimates for the discrete action space.
+
+PPO demonstrated moderate performance with improved stability (±619.75 variance). The clipped surrogate objective prevented destructive policy updates, leading to smoother learning curves. However, the conservative update strategy meant slower adaptation to the optimal harvesting policy, resulting in lower mean rewards compared to other policy gradient methods.
+
+A2C showed strong performance (3,651.89 mean reward) with good stability (±381.03). The synchronous advantage estimation with 5-step returns provided effective bias-variance tradeoff. Training curves showed steady improvement without major collapses, indicating robust learning. The lower variance compared to DQN demonstrates the benefit of policy gradient methods for continuous decision-making in farming scenarios.
+
+REINFORCE achieved the highest mean reward (3,851.95) and lowest variance (±285.04), indicating the most stable and effective learning. Using complete episode returns (GAE lambda=1.0) provided accurate gradient estimates for the long-horizon reward structure. The simplicity of the algorithm avoided the complexity and potential instability of more sophisticated variance reduction techniques.
+
+[INSERT IMAGE: learning_curves.png]
+[Caption: Figure 4. Training learning curves showing episodic rewards over time for all four algorithms. Solid lines represent 10-episode rolling averages; shaded regions show standard deviation.]
+
+2. Episodes to Converge
+
+DQN: Approximately 400-500 episodes to reach stable Q-values, but continued showing high variance even after convergence. The epsilon-greedy exploration strategy took significant time to discover the optimal harvesting timing.
+
+PPO: Converged after 600-700 episodes with smooth, monotonic improvement. The trust region constraint ensured consistent progress but required more samples to reach optimal policy.
+
+A2C: Fastest initial learning with noticeable improvement within 200-300 episodes. However, final convergence to optimal policy took 500-600 episodes due to the bias-variance tradeoff in 5-step returns.
+
+REINFORCE: Slowest initial convergence (700-800 episodes) due to high variance in episode returns, but achieved the most stable final policy. The complete return estimation eventually led to superior performance once sufficient samples were collected.
+
+3. Generalization
+
+All models were evaluated on 10 episodes with randomized initial conditions (varying EC, pH, water levels, and plant growth stages). Results show:
+
+DQN: Performance degraded significantly on unseen states (mean reward dropped to 1,850.32), indicating overfitting to training distribution. Struggled particularly when initial EC was outside the 1.5-2.5 optimal range.
+
+PPO: Maintained 85% of training performance (2,503.09 mean reward) on unseen states. The entropy regularization promoted exploration, leading to more robust policies that generalized well to varied initial conditions.
+
+A2C: Strong generalization with 88% performance retention (3,213.66 mean reward). The continuous policy updates and advantage estimation helped the agent learn general principles rather than memorizing specific state-action mappings.
+
+REINFORCE: Best generalization with 92% performance retention (3,543.80 mean reward). The complete episode returns captured long-term consequences, enabling the agent to develop strategies that worked across diverse starting conditions. Particularly effective at adapting harvesting timing to initial plant maturity levels.
+
+[INSERT IMAGE: performance_metrics.png]
+[Caption: Figure 5. Comprehensive performance analysis including: (a) reward vs stability trade-off scatter plot, (b) reward distribution box plots, (c) min-mean-max range comparison, (d) generalization scores, (e) efficiency metrics, and (f) overall performance radar chart comparing all algorithms across key metrics]
+
+6. Conclusion and Discussion
+
+REINFORCE emerged as the superior algorithm for the hydroponic farming domain, achieving the highest mean reward (3,851.95) with exceptional stability (±285.04) and best generalization (92% retention). Its success stems from using complete episode returns that align well with the long-horizon nature of plant growth and the sparse harvesting rewards. The algorithm's simplicity also reduced hyperparameter sensitivity and training instability.
+
+A2C was the second-best performer, offering an excellent balance between sample efficiency and final performance. Its synchronous updates and advantage estimation provided stable learning without the variance issues of REINFORCE or the instability of DQN.
+
+PPO, despite its theoretical advantages, underperformed due to overly conservative updates that limited adaptation to the optimal harvesting policy. The trust region constraint, while preventing catastrophic policy degradation, also slowed convergence in this domain where aggressive policy updates could be beneficial during early exploration.
+
+DQN showed the poorest performance due to high variance and difficulty with sparse rewards. The discrete action-value approximation struggled with the continuous state dynamics of plant growth, and experience replay did not adequately address the temporal credit assignment problem inherent in delayed harvesting rewards.
+
+Strengths and Limitations:
+REINFORCE excels in domains with clear episode structure and sparse but significant rewards (harvesting). However, it requires many episodes for convergence and is sample-inefficient. A2C provides faster initial learning but may not reach REINFORCE's performance ceiling. PPO offers the safest learning but sacrifices peak performance. DQN's value-based approach is mismatched for this continuous-state, long-horizon problem.
+
+Future Improvements:
+1. Implement prioritized experience replay for DQN to focus on rare harvesting transitions
+2. Test PPO with more aggressive clip ranges (0.3-0.4) to accelerate policy updates
+3. Explore hybrid approaches combining REINFORCE's episode returns with A2C's continuous updates
+4. Add curriculum learning to gradually increase environment complexity (grid size, plant varieties)
+5. Implement multi-objective optimization to balance yield, resource efficiency, and sustainability metrics
+6. Deploy trained models in real hydroponic systems with sim-to-real transfer techniques
