@@ -3,6 +3,7 @@
 **Student:** Afsa Umutoniwase  
 **Course:** Machine Learning Techniques II - Reinforcement Learning  
 **Institution:** African Leadership University (ALU)  
+**Video Demo:** [Watch on YouTube](https://www.youtube.com/watch?v=V-9jz0xsnEo)  
 **Mission:** Revolutionize agriculture in Rwanda through AI-powered hydroponic farming systems
 
 ---
@@ -192,8 +193,6 @@ This creates visualization frames in `static_random_agent/` folder.
 
 ### Option 2: Train Models from Scratch
 
-**⚠️ Warning:** Training takes ~1-3 hours per algorithm with hyperparameter tuning.
-
 **Train DQN (Value-Based):**
 ```bash
 python training/dqn_training.py
@@ -361,8 +360,6 @@ This project directly addresses Rwanda's agricultural challenges:
 Complete project analysis available in:
 - `Machine_Learning_Techniques_II - Summative_Assignment - Report.txt`
 - Includes detailed methodology, results, and discussion
-- See `VIDEO_RECORDING_GUIDE.md` for demonstration script
-
 ---
 
 ## Repository
@@ -384,13 +381,3 @@ This project is part of an academic assignment for ALU's BSE program in Machine 
 **Email:** a.umutoniwa@alustudent.com  
 **GitHub:** [@Afsaumutoniwase](https://github.com/Afsaumutoniwase)
 
----
-
-## Acknowledgments
-
-- **Stable-Baselines3** team for excellent RL library
-- **Gymnasium** for environment framework
-- **Pygame** community for visualization tools
-- ALU ML Techniques II course instructors
-
----

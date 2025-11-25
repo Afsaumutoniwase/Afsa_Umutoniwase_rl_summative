@@ -25,9 +25,7 @@ def run_random_agent(num_steps: int = 50, save_frames: bool = True):
         num_steps: Number of steps to run
         save_frames: Whether to save frames as images
     """
-    print("="*60)
     print("Running Random Agent (No Training)")
-    print("="*60)
     
     env = HydroponicsEnv(grid_size=8, max_steps=200)
     renderer = HydroponicsRenderer(env.grid_size)
@@ -156,9 +154,7 @@ def run_trained_agent(algorithm: str = 'dqn', num_episodes: int = 5,
         model_path: Optional custom path to model
         verbose: Whether to print detailed information
     """
-    print("="*60)
     print(f"Running Trained {algorithm.upper()} Agent")
-    print("="*60)
     
     # Load model
     try:
@@ -233,9 +229,7 @@ def run_trained_agent(algorithm: str = 'dqn', num_episodes: int = 5,
             print(f"  Avg Growth: {np.mean(env.plant_grid):.2%}")
     
     # Print summary statistics
-    print("\n" + "="*60)
     print("Performance Summary")
-    print("="*60)
     print(f"Average Reward: {np.mean(episode_rewards):.2f} ± {np.std(episode_rewards):.2f}")
     print(f"Average Episode Length: {np.mean(episode_lengths):.1f} ± {np.std(episode_lengths):.1f}")
     print(f"Best Episode Reward: {np.max(episode_rewards):.2f}")
@@ -288,9 +282,7 @@ def compare_all_models(num_episodes: int = 3):
             continue
     
     # Print comparison
-    print("\n" + "="*60)
     print("Model Comparison Summary")
-    print("="*60)
     for algo, stats in results.items():
         print(f"{algo.upper():12} - Mean: {stats['mean_reward']:7.2f} ± {stats['std_reward']:5.2f} "
               f"(Max: {stats['max_reward']:7.2f}, Min: {stats['min_reward']:7.2f})")
