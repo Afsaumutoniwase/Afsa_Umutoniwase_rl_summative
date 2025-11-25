@@ -3,10 +3,9 @@
 **Student:** Afsa Umutoniwase  
 **Course:** Machine Learning Techniques II - Reinforcement Learning  
 **Institution:** African Leadership University (ALU)  
-**Video Demo:** [Watch on YouTube](https://www.youtube.com/watch?v=V-9jz0xsnEo)  
+**Video Demo:** [Watch on YouTube](https://www.youtube.com/watch?v=yXbiL85i30U)  
 **Mission:** Revolutionize agriculture in Rwanda through AI-powered hydroponic farming systems
 
----
 
 ## Project Overview
 
